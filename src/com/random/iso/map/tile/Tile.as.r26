@@ -1,0 +1,232 @@
+package com.alegames.map.tile {
+	import com.alegames.GameObject;
+	import com.alegames.utils.astar.INode;
+    import flash.display.Bitmap;
+    import flash.display.BitmapData;
+	import org.flixel.FlxSprite;
+	
+	/**
+	 * ...
+	 * @author Allen Halsted
+	 */
+	public class Tile implements INode {
+		
+		private static var IDS:int = 0;
+		
+        /**
+         * @private
+         * static tile renderables
+         */
+        private static var m_legalData:BitmapData;
+        private static var m_illegalData:BitmapData;
+        
+        /**
+         * @private
+         * tile bitmap
+         */
+        private var m_tileImage:FlxSprite = new FlxSprite();
+        
+		private var m_col:int;
+		private var m_row:int;
+		private var m_items:Array;
+		private var m_baseWalkability:Boolean;
+		private var m_basePlaceability:Boolean;
+		private var m_walkable:Boolean;
+		private var m_h:Number;
+		private var m_neighbors:Array;
+		private var m_nodeId:String;
+		private var m_nodeType:String;
+        private var m_enabled:Boolean;
+		
+		public function Tile() {
+			++IDS;
+			m_nodeId = IDS.toString();
+			m_nodeType = "normal";
+			
+			m_items = [];
+			m_baseWalkability = true;
+			m_basePlaceability = true;
+			m_walkable = true;
+            m_enabled = true;
+         	addGridPiece();
+		}
+        
+         /**
+         * Store the BitmapData used to determine which tile type to render.
+         * 
+         * @param	legal BitmapData that represents a "legal" tile state.
+         * 
+         * @param	illegal BitmapData that represents an "illegal" tile state.
+         */
+        public static function setBitmapData(legal:BitmapData, illegal:BitmapData):void {
+            m_legalData = legal;
+            m_illegalData = illegal;
+        }
+		
+		public function addItem(item:GameObject):void {
+			m_items.push(item);
+            addGridPiece();
+			
+			determineWalkability();
+		}
+		
+		private function addGridPiece():void
+		{
+			if (m_legalData && m_illegalData && m_tileImage)
+                m_tileImage.pixels = allowsItemPlacement() ? m_legalData : m_illegalData;
+		}
+		
+		public function fromXML(info:XML):void {
+			
+			m_baseWalkability = info.@walkability == "false" ? false : true;
+			m_basePlaceability = info.@placeability == "false" ? false : true;
+			if (m_legalData && m_illegalData && m_tileImage)
+                m_tileImage.pixels = allowsItemPlacement() ? m_legalData : m_illegalData;
+			
+		}
+		
+		public function toXML():String
+		{
+			return "<Tile col='" + m_col + "' row='" + m_row + "' walkability='" + m_baseWalkability + "' placeability='" + m_basePlaceability + "' />";
+		}
+		
+		public function allowsItemPlacement():Boolean {
+			var allows:Boolean = m_basePlaceability;
+            if (!m_enabled) {
+                return false;
+            }
+			if (allows) {
+				for (var i:int = 0; i < m_items.length;++i) {
+					var item:GameObject = m_items[i];
+					if (!item.overlap) {
+						allows = false;
+						break;
+					}
+				}
+			}
+			return allows;
+		}
+		
+		private function determineWalkability():void {
+			var w:Boolean = m_baseWalkability;
+			if (w) {
+				for (var i:int = 0; i < m_items.length;++i) {
+					var item:GameObject = m_items[i];
+					if (!item.walkable) {
+						//trace("HERE");
+						w = false;
+						break;
+					}
+				}
+			}
+			
+			m_walkable = m_enabled && w;
+			
+		}
+		
+		public function removeItem(item:GameObject):void {
+			//for (var i:int = 0; i < m_items.length;++i) {
+			//	if (m_items[i] == item) {
+			//		m_items.splice(i, 1);
+			//		break;
+			//	}
+			//}
+            //if (m_legalData && m_illegalData && m_tileImage) {
+            //    m_tileImage.pixels = allowsItemPlacement() ? m_legalData : m_illegalData;
+			//}
+			
+			//determineWalkability();
+		}
+		
+		/* INTERFACE com.alegames.utils.astar.INode */
+		
+		public function setHeuristic(h:Number):void{
+			m_h = h;
+		}
+		
+		public function getHeuristic():Number{
+			return m_h;
+		}
+		
+		public function getCol():int{
+			return m_col;
+		}
+		
+		public function getRow():int{
+			return m_row;
+		}
+		
+		public function setNeighbors(arr:Array):void{
+			m_neighbors = arr;
+		}
+		
+		public function getNodeId():String{
+			return m_nodeId;
+		}
+		
+		public function getNeighbors():Array{
+			return m_neighbors;
+		}
+		
+		public function getNodeType():String{
+			return m_nodeType;
+		}
+		
+		public function setNodeType(type:String):void{
+			m_nodeType = type;
+		}
+		
+		public function get col():int { return m_col; }
+		
+		public function set col(value:int):void {
+			m_col = value;
+		}
+		
+		public function get row():int { return m_row; }
+		
+		public function set row(value:int):void {
+			m_row = value;
+		}
+		
+		public function get baseWalkability():Boolean { return m_baseWalkability; }
+		
+		public function set baseWalkability(value:Boolean):void {
+			m_baseWalkability = value;
+			
+			  if (m_legalData && m_illegalData && m_tileImage)
+				m_tileImage.pixels = m_baseWalkability ? m_legalData : m_illegalData;
+		}
+		
+		public function get walkable():Boolean { return m_walkable; }
+		
+		public function get basePlaceability():Boolean { return m_basePlaceability; }
+		
+		public function set basePlaceability(value:Boolean):void {
+			m_basePlaceability = value;
+			 if (m_legalData && m_illegalData && m_tileImage)
+				m_tileImage.pixels = allowsItemPlacement() ? m_legalData : m_illegalData;
+		}
+        
+        public function enable():void {
+            m_enabled = true;
+            if (m_legalData && m_illegalData && m_tileImage)
+				m_tileImage.pixels = allowsItemPlacement() ? m_legalData : m_illegalData;
+        }
+        
+        public function disable():void {
+            m_enabled = false;
+            if (m_legalData && m_illegalData && m_tileImage)
+				m_tileImage.pixels = allowsItemPlacement() ? m_legalData : m_illegalData;
+        }
+		
+        /**
+         * The renderable bitmap representation of the tile object.
+         */
+        public function get tileImage():FlxSprite {
+            return m_tileImage;
+        }
+		
+		public function get items():Array { return m_items; }
+	}
+	
+}
