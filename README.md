@@ -5,7 +5,7 @@ A 2D Isometric game engine written in Action Script 3
 There is some interesting math and concepts involved in building an isometric world. When trying to understand it is sometime helpful to see a real world example. 
 
 ## A-Star Path Finding
-Nothing special here if you have seen on A-Star algorithm you have seen most of them.
+Nothing special here if you have seen one A-Star algorithm you have seen most of them.
 
 ## Character/Monster AI
 Basic AIs like Attack, Defend, Meander, etc...
